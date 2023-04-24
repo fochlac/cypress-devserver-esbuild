@@ -1,0 +1,29 @@
+{
+  "name": "cypress-devserver-esbuild",
+  "version": "0.1.0",
+  "description": "Minimal esbuild dev server for usage with cypress component tests.",
+  "main": "./src/dev-server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.dev/fochlac/esbuild-dev-server/"
+  },
+  "files": ["src"],
+  "keywords": [
+    "cypress",
+    "esbuild"
+  ],
+  "author": "Florian Riedel",
+  "license": "MIT",
+  "peerDependencies": {
+    "esbuild": "^0.17.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.17.18"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

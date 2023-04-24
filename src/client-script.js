@@ -7,10 +7,18 @@ if (!CypressInstance) {
     throw new Error('Tests cannot run without a reference to Cypress!')
 }
 
+function replaceLast(str, search, replace) {
+    let idx = str.lastIndexOf(search);
+    if (idx >= 0) {
+        return str.substring(0, idx) + replace + str.substring(idx + search.length);
+    }
+    return str
+}
+ 
 const devServerPublicPathRoute = CypressInstance.config('devServerPublicPathRoute')
 const {relative, fileExtension} = CypressInstance.spec
-const normalizedAbsolutePathJs = relative.replace(/^\//, '').replace(new RegExp(fileExtension + $), '.js')
-const normalizedAbsolutePathCss = relative.replace(/^\//, '').replace(new RegExp(fileExtension + $), '.css')
+const normalizedAbsolutePathJs = replaceLast(relative.replace(/^\//, ''), fileExtension, '.js')
+const normalizedAbsolutePathCss = replaceLast(relative.replace(/^\//, ''), fileExtension, '.css')
 
 /* Spec file import logic, since we use esm bundles load the js and inject the css */
 CypressInstance.onSpecWindow(window, [
@@ -18,17 +26,22 @@ CypressInstance.onSpecWindow(window, [
         absolute: CypressInstance.spec.absolute,
         load: () => {
             // inject css
-            const styles = document.createElement('link')
-            styles.rel = 'stylesheet'
-            styles.type = 'text/css'
-            styles.href = `${devServerPublicPathRoute}/${normalizedAbsolutePathCss}`
-            document.getElementsByTagName('head')[0].appendChild(styles)
+            if (window.hasCssModules) {
+                fetch(`${devServerPublicPathRoute}/${normalizedAbsolutePathCss}`)
+                    .then(r => r.text())
+                    .then(css => {
+                        const styles = document.createElement('style')
+                        styles.innerHTML = css || ''
+                        document.getElementsByTagName('head')[0].appendChild(styles)
+                    })
+                    .catch(e => console.log(e))
+            }
 
             // load js
             return import(`${devServerPublicPathRoute}/${normalizedAbsolutePathJs}`)
         },
         relative: CypressInstance.spec.relative,
-        relativeUrl: testFileAbsolutePathRoute
+        relativeUrl: `${devServerPublicPathRoute}/${normalizedAbsolutePathJs}`
     }
 ])
 

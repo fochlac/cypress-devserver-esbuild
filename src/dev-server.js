@@ -17,13 +17,13 @@ async function buildFiles(esbuildConfig, entryPoints, plugins = [], supportFileI
         bundle: true,
         format: 'esm',
         splitting: true,
-        inject: supportFileInjectPath ? [supportFileInjectPath] : undefined,
+        inject: supportFileInjectPath ? [supportFileInjectPath, ...(esbuildConfig.inject || [])] : esbuildConfig.inject,
         outbase: '/',
         plugins: [...esbuildConfig.plugins, ...plugins]
     })
 }
 
-const createDevServer = esbuildConfig => async ({ cypressConfig, specs, devServerEvents }) => {
+const createDevServer = (esbuildConfig, {hasCssModules} = {}) => async ({ cypressConfig, specs, devServerEvents }) => {
     let started,
         isBuilding = false
     const portPromise = new Promise(resolve => {
@@ -106,12 +106,15 @@ const createDevServer = esbuildConfig => async ({ cypressConfig, specs, devServe
             console.log('[ESBUILD_DEV_SERVER] index.html missing.')
         }
         // inject the kickstart script
-        const outString = html.replace('</head>', `<script type="module">${template}</script></head>`)
+        const outString = html.replace('</head>', `<script type="module">window.hasCssModules=${hasCssModules ? 'true' : false};${template}</script></head>`)
         res.status(200).send(outString)
     })
 
     // serve the dist folder for the main js file and the css
-    app.use(cypressConfig.devServerPublicPathRoute, express.static(esbuildConfig.outdir))
+    app.use(cypressConfig.devServerPublicPathRoute, express.static(esbuildConfig.outdir, { fallthrough: true }), (req, res) => {
+        console.log('[ESBUILD_DEV_SERVER] Could not match request to url: ', req.url)
+        res.status(404).send()
+    })
 
     // serve the dist folder for internal requests, i.e. dynamic imports and css imports
     app.use(express.static(esbuildConfig.outdir))

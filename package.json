@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.dev/fochlac/esbuild-dev-server/"
+    "url": "https://github.dev/fochlac/cypress-devserver-esbuild/"
   },
   "files": ["src"],
   "keywords": [

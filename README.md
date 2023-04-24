@@ -1,4 +1,4 @@
-# esbuild-dev-server
+# cypress-devserver-esbuild
 
 Minimal esbuild dev server for usage with cypress component tests. Tests are packaged as esm-bundles and delivered via a tiny express server.
 

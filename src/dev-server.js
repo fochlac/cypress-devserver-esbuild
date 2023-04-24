@@ -6,7 +6,7 @@ const { readFileSync } = require('fs')
 
 const template = readFileSync(path.join(__dirname, './client-script.js'), 'utf8')
 
-async function buildFiles(esbuildConfig, entryPoints, plugins = []) {
+async function buildFiles(esbuildConfig, entryPoints, plugins = [], supportFileInjectPath) {
     if (!esbuildConfig.outdir) {
         throw new Error('[ESBUILD_DEV_SERVER]: Please define an outdir in your esbuild config.')
     }
@@ -17,7 +17,7 @@ async function buildFiles(esbuildConfig, entryPoints, plugins = []) {
         bundle: true,
         format: 'esm',
         splitting: true,
-        inject: [path.join(esbuildConfig.outdir, './head.js')],
+        inject: supportFileInjectPath ? [supportFileInjectPath] : undefined,
         outbase: '/',
         plugins: [...esbuildConfig.plugins, ...plugins]
     })
@@ -29,10 +29,14 @@ const createDevServer = esbuildConfig => async ({ cypressConfig, specs, devServe
     const portPromise = new Promise(resolve => {
         started = port => resolve({ port })
     })
-    await writeFile(
-        path.join(esbuildConfig.outdir, './head.js'),
-        `import '${cypressConfig.supportFile.replaceAll('\\', '\\\\')}'`
-    )
+
+    const supportFileInjectPath = path.join(esbuildConfig.outdir, './head.js')
+    if (cypressConfig.supportFile) {
+        await writeFile(
+            supportFileInjectPath,
+            `import '${cypressConfig.supportFile.replaceAll('\\', '\\\\')}'`
+        )
+    }
 
     const monitorPlugin = {
         name: 'server',
@@ -55,7 +59,8 @@ const createDevServer = esbuildConfig => async ({ cypressConfig, specs, devServe
     let ctx = await buildFiles(
         esbuildConfig,
         specs.map(spec => spec.absolute),
-        [monitorPlugin]
+        [monitorPlugin],
+        cypressConfig.supportFile ? supportFileInjectPath : null
     )
 
     ctx.watch()
@@ -66,7 +71,8 @@ const createDevServer = esbuildConfig => async ({ cypressConfig, specs, devServe
         const newCtx = await buildFiles(
             esbuildConfig,
             specs.map(spec => spec.absolute),
-            [monitorPlugin]
+            [monitorPlugin],
+            cypressConfig.supportFile ? supportFileInjectPath : null
         )
         newCtx.watch()
         oldCtx.dispose()
@@ -81,9 +87,24 @@ const createDevServer = esbuildConfig => async ({ cypressConfig, specs, devServe
     })
 
     app.get(cypressConfig.devServerPublicPathRoute + '/index.html', async (_req, res) => {
-        const html = await readFile(path.join(cypressConfig.repoRoot, cypressConfig.indexHtmlFile), {
-            encoding: 'utf8'
-        })
+        let html = `<!DOCTYPE html>
+        <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <title>Cypress App</title>
+          </head>
+          <body>
+            <div data-cy-root style="width: 100%; height: 100%"></div>
+          </body>
+        </html>`
+        try {
+            html = await readFile(path.join(cypressConfig.repoRoot, cypressConfig.indexHtmlFile), {
+                encoding: 'utf8'
+            })    
+        }
+        catch(e) {
+            console.log('[ESBUILD_DEV_SERVER] index.html missing.')
+        }
         // inject the kickstart script
         const outString = html.replace('</head>', `<script type="module">${template}</script></head>`)
         res.status(200).send(outString)

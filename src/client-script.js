@@ -8,9 +8,9 @@ if (!CypressInstance) {
 }
 
 const devServerPublicPathRoute = CypressInstance.config('devServerPublicPathRoute')
-const normalizedAbsolutePath = CypressInstance.spec.relative.replace(/^\//, '')
-
-const testFileAbsolutePathRoute = `${devServerPublicPathRoute}/${normalizedAbsolutePath}`
+const {relative, fileExtension} = CypressInstance.spec
+const normalizedAbsolutePathJs = relative.replace(/^\//, '').replace(new RegExp(fileExtension + $), '.js')
+const normalizedAbsolutePathCss = relative.replace(/^\//, '').replace(new RegExp(fileExtension + $), '.css')
 
 /* Spec file import logic, since we use esm bundles load the js and inject the css */
 CypressInstance.onSpecWindow(window, [
@@ -21,11 +21,11 @@ CypressInstance.onSpecWindow(window, [
             const styles = document.createElement('link')
             styles.rel = 'stylesheet'
             styles.type = 'text/css'
-            styles.href = testFileAbsolutePathRoute.replace(/.js$/, '.css')
+            styles.href = `${devServerPublicPathRoute}/${normalizedAbsolutePathCss}`
             document.getElementsByTagName('head')[0].appendChild(styles)
 
             // load js
-            return import(testFileAbsolutePathRoute)
+            return import(`${devServerPublicPathRoute}/${normalizedAbsolutePathJs}`)
         },
         relative: CypressInstance.spec.relative,
         relativeUrl: testFileAbsolutePathRoute

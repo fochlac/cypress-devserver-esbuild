@@ -39,12 +39,12 @@ const createEsbuildDevServer = (esbuildConfig, { getCssFilePath, singleBundle, p
 
     return {
         loadTest: async (spec, { injectHTML, loadBundle }) => {
-            const supportPath = supportFile && resolve(join(outdir, supportFile.relative.replace(supportFile?.fileExtension, '.js')))
+            const supportPath = supportFile && join(outdir, supportFile.relative.replace(supportFile?.fileExtension, '.js'))
             if (supportFile && !singleBundle) {
-                loadBundle(supportPath)
+                loadBundle(resolve(supportPath))
             }
 
-            const testPath = resolve(join(outdir, spec.relative.replace(spec?.fileExtension, '.js')))
+            const testPath = join(outdir, spec.relative.replace(spec?.fileExtension, '.js'))
             if (singleBundle) {
                 const hash = crypto.createHash('md5').update(testPath).digest('base64url')
                 const now = Date.now()
@@ -62,7 +62,7 @@ const createEsbuildDevServer = (esbuildConfig, { getCssFilePath, singleBundle, p
                 loadBundle(resolve(fileName))
             }
             else {
-                loadBundle(testPath)
+                loadBundle(resolve(testPath))
             }
 
             if (typeof getCssFilePath === 'function') {

@@ -1,25 +1,24 @@
-const { context } = require('esbuild')
-const path = require('path')
+const { context, build } = require('esbuild')
+const { resolve, join } = require('path')
 const { readFile } = require('fs/promises')
 const { createCustomDevServer } = require('cypress-ct-custom-devserver')
+const crypto = require('crypto')
 
 async function createContext(esbuildConfig, entryPoints, plugins = []) {
-    if (!esbuildConfig.outdir) {
-        throw new Error('[ESBUILD_DEV_SERVER]: Please define an outdir in your esbuild config.')
-    }
-
     return context({
         ...esbuildConfig,
         entryPoints,
         bundle: true,
         format: 'esm',
         splitting: true,
-        outbase: '/',
+        outbase: esbuildConfig.outbase ?? '/',
+        outdir: esbuildConfig.outdir ?? '/dist',
         plugins: [...esbuildConfig.plugins, ...plugins]
     })
 }
 
-const createDevServer = (esbuildConfig, { hasCssFiles } = {}) => createCustomDevServer(async ({ specs, supportFile, onBuildComplete, onBuildStart, serveStatic }) => {
+const createEsbuildDevServer = (esbuildConfig, { getCssFilePath, singleBundle, port } = {}) => createCustomDevServer(async ({ specs, supportFile, onBuildComplete, onBuildStart, serveStatic }) => {
+    const outdir = esbuildConfig.outdir ?? '/dist'
     const monitorPlugin = {
         name: 'server',
         setup(build) {
@@ -36,26 +35,48 @@ const createDevServer = (esbuildConfig, { hasCssFiles } = {}) => createCustomDev
 
     ctx.watch()
 
-    serveStatic(esbuildConfig.outdir)
+    serveStatic(outdir)
 
     return {
         loadTest: async (spec, { injectHTML, loadBundle }) => {
-            if (supportFile) {
-                const supportPath = path.resolve(path.join(esbuildConfig.outdir, supportFile.relative.replace(supportFile?.fileExtension, '.js')))
+            const supportPath = supportFile && resolve(join(outdir, supportFile.relative.replace(supportFile?.fileExtension, '.js')))
+            if (supportFile && !singleBundle) {
                 loadBundle(supportPath)
-
             }
 
-            const testPath = path.resolve(path.join(esbuildConfig.outdir, spec.relative.replace(spec?.fileExtension, '.js')))
-            loadBundle(testPath)
+            const testPath = resolve(join(outdir, spec.relative.replace(spec?.fileExtension, '.js')))
+            if (singleBundle) {
+                const hash = crypto.createHash('md5').update(testPath).digest('base64url')
+                const now = Date.now()
+                const fileName = join(outdir, `/__bundle/test.${hash}.js`)
+                await build({
+                    entryPoints: [testPath],
+                    inject: [supportPath],
+                    bundle: true,
+                    allowOverwrite: true,
+                    platform: 'neutral',
+                    target: esbuildConfig.target,
+                    outfile: fileName,
+                })
+                console.log(`[ESBUILD_DEV_SERVER] Creating bundle took ${Date.now() - now}ms.`)
+                loadBundle(resolve(fileName))
+            }
+            else {
+                loadBundle(testPath)
+            }
 
-            if (hasCssFiles) {
-                const cssPath = path.resolve(path.join(esbuildConfig.outdir, spec.relative.replace(spec?.fileExtension, '.css')))
-                try {
-                    const css = await readFile(cssPath, 'utf8')
-                    injectHTML(`<style>${css}</style>`)
+            if (typeof getCssFilePath === 'function') {
+                const cssPath = resolve(getCssFilePath(spec, outdir))
+                let css = ''
+                const files = Array.isArray(cssPath) ? cssPath : [cssPath]
+                for (const file in files) {
+                    try {
+                        const content = await readFile(cssPath, 'utf8')
+                        css += content
+                    }
+                    catch (e) { }
                 }
-                catch (e) { }
+                injectHTML(`<style>${css}</style>`)
             }
         },
         onSpecChange: async specs => {
@@ -68,10 +89,11 @@ const createDevServer = (esbuildConfig, { hasCssFiles } = {}) => createCustomDev
             newCtx.watch()
             oldCtx.dispose()
         },
-        onClose: () => ctx.dispose()
+        onClose: () => ctx.dispose(),
+        devServerPort: port
     }
 })
 
 module.exports = {
-    createDevServer
+    createEsbuildDevServer
 }

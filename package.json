@@ -1,6 +1,6 @@
 {
   "name": "cypress-devserver-esbuild",
-  "version": "0.1.10",
+  "version": "0.2.6",
   "description": "Minimal esbuild dev server for usage with cypress component tests.",
   "main": "./src/dev-server.js",
   "scripts": {
@@ -10,7 +10,9 @@
     "type": "git",
     "url": "https://github.dev/fochlac/cypress-devserver-esbuild/"
   },
-  "files": ["src"],
+  "files": [
+    "src"
+  ],
   "keywords": [
     "cypress",
     "esbuild"
@@ -24,6 +26,6 @@
     "esbuild": "^0.17.18"
   },
   "dependencies": {
-    "express": "^4.18.2"
+    "cypress-ct-custom-devserver": "^1.0.1"
   }
 }

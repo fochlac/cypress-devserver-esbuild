@@ -13,7 +13,7 @@ const esbuildConfig = {
 
 const config = defineConfig({
     component: {
-        devServer: createDevServer(esbuildConfig, { hasCssModules: true }),
+        devServer: createDevServer(esbuildConfig, { hasCssFiles: true }),
         indexHtmlFile: './test/cypress/setup/cypress-index.html',
         supportFile: './test/cypress/support/index.js',
     }

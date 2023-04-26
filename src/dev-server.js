@@ -11,7 +11,7 @@ async function createContext(esbuildConfig, entryPoints, plugins = []) {
         bundle: true,
         format: 'esm',
         splitting: true,
-        outbase: esbuildConfig.outbase ?? '/',
+        outbase: esbuildConfig.outbase ?? './',
         outdir: esbuildConfig.outdir ?? '/dist',
         plugins: [...esbuildConfig.plugins, ...plugins]
     })

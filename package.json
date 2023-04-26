@@ -23,6 +23,7 @@
     "esbuild": "^0.17.0"
   },
   "devDependencies": {
+    "@asn.aeb/esbuild-css-modules-plugin": "^0.1.9",
     "cypress": "^12.10.0",
     "esbuild": "^0.17.18",
     "react": "^18.2.0",

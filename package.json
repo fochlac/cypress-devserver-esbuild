@@ -1,6 +1,6 @@
 {
   "name": "cypress-devserver-esbuild",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Minimal esbuild dev server for usage with cypress component tests.",
   "main": "./src/dev-server.js",
   "scripts": {
@@ -30,6 +30,6 @@
     "react-dom": "^18.2.0"
   },
   "dependencies": {
-    "cypress-ct-custom-devserver": "^1.0.1"
+    "cypress-ct-custom-devserver": "^1.0.2"
   }
 }

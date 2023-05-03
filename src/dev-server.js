@@ -10,17 +10,17 @@ async function createContext(esbuildConfig, entryPoints, plugins = []) {
         entryPoints,
         bundle: true,
         format: 'esm',
-        splitting: true,
+        splitting: esbuildConfig.splitting !== false,
         outbase: esbuildConfig.outbase ?? './',
         outdir: esbuildConfig.outdir ?? '/dist',
         plugins: [...esbuildConfig.plugins, ...plugins]
     })
 }
 
-const createEsbuildDevServer = (esbuildConfig, { getCssFilePath, singleBundle, port } = {}) => createCustomDevServer(async ({ specs, supportFile, onBuildComplete, onBuildStart, serveStatic }) => {
+const createEsbuildDevServer = (esbuildConfig, { getCssFilePath, singleBundle, port, additionalEntryPoints } = {}) => createCustomDevServer(async ({ specs, supportFile, onBuildComplete, onBuildStart, serveStatic }) => {
     const outdir = esbuildConfig.outdir ?? '/dist'
     const monitorPlugin = {
-        name: 'server',
+        name: 'esbuild-dev-server-monitor',
         setup(build) {
             build.onStart(onBuildStart)
             build.onEnd(onBuildComplete)
@@ -29,7 +29,9 @@ const createEsbuildDevServer = (esbuildConfig, { getCssFilePath, singleBundle, p
 
     let ctx = await createContext(
         esbuildConfig,
-        specs.map(spec => spec.absolute).concat(supportFile ? [supportFile.absolute] : []),
+        specs.map(spec => spec.absolute)
+            .concat(supportFile ? [supportFile.absolute] : [])
+            .concat(Array.isArray(additionalEntryPoints) ? additionalEntryPoints : []),
         [monitorPlugin]
     )
 
@@ -69,9 +71,15 @@ const createEsbuildDevServer = (esbuildConfig, { getCssFilePath, singleBundle, p
                 const cssPath = resolve(getCssFilePath(spec, outdir))
                 let css = ''
                 const files = Array.isArray(cssPath) ? cssPath : [cssPath]
-                for (const file in files) {
+
+                if (supportFile) {
+                    const cssPath = resolve(getCssFilePath(supportFile, outdir))
+                    files.push(...(Array.isArray(cssPath) ? cssPath : [cssPath]))
+                }
+
+                for (const file of files) {
                     try {
-                        const content = await readFile(cssPath, 'utf8')
+                        const content = await readFile(file, 'utf8')
                         css += content
                     }
                     catch (e) { }
@@ -83,7 +91,9 @@ const createEsbuildDevServer = (esbuildConfig, { getCssFilePath, singleBundle, p
             const oldCtx = ctx
             const newCtx = await createContext(
                 esbuildConfig,
-                specs.map(spec => spec.absolute).concat(supportFile ? [supportFile.absolute] : []),
+                specs.map(spec => spec.absolute)
+                    .concat(supportFile ? [supportFile.absolute] : [])
+                    .concat(Array.isArray(additionalEntryPoints) ? additionalEntryPoints : []),
                 [monitorPlugin]
             )
             newCtx.watch()

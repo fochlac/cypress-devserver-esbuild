@@ -1,4 +1,4 @@
-![CircleCI](https://img.shields.io/circleci/build/github/fochlac/cypress-devserver-esbuild) ![npm](https://img.shields.io/npm/v/cypress-devserver-esbuild)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/fochlac/cypress-devserver-esbuild/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/fochlac/cypress-devserver-esbuild/tree/main) [![npm](https://img.shields.io/npm/v/cypress-devserver-esbuild)](https://www.npmjs.com/package/cypress-devserver-esbuild)
 
 # cypress-devserver-esbuild
 

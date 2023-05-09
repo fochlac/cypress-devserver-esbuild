@@ -19,11 +19,18 @@ async function createContext(esbuildConfig, entryPoints, plugins = []) {
 
 const createEsbuildDevServer = (esbuildConfig, { getCssFilePath, singleBundle, port, additionalEntryPoints } = {}) => createCustomDevServer(async ({ specs, supportFile, onBuildComplete, onBuildStart, serveStatic }) => {
     const outdir = esbuildConfig.outdir ?? '/dist'
+    let markFirstBuildDone
+    const firstBuildDone = new Promise((resolve) => {
+        markFirstBuildDone = () => resolve()
+    })
     const monitorPlugin = {
         name: 'esbuild-dev-server-monitor',
         setup(build) {
             build.onStart(onBuildStart)
-            build.onEnd(onBuildComplete)
+            build.onEnd(() => {
+                onBuildComplete()
+                markFirstBuildDone()
+            })
         }
     }
 
@@ -38,6 +45,8 @@ const createEsbuildDevServer = (esbuildConfig, { getCssFilePath, singleBundle, p
     ctx.watch()
 
     serveStatic(outdir)
+
+    await firstBuildDone
 
     return {
         loadTest: async (spec, { injectHTML, loadBundle }) => {

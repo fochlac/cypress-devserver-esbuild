@@ -93,4 +93,6 @@ If set to true esbuild will bundle your test and all it's dependencies into a si
 #### port
 *Default: 0*
 
-You can set a custom port for the dev-server to run. If no port is provided, the devserver will use a random free port.
+#### logFunction
+
+You can provide a log function. The first parameter of the function is the loglevel, ranging from 1 to 6 with 1 being critical errors and 6 debug information. A reasonable default might be to log output <= 3. All following parameters are part of the log message.

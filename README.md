@@ -90,6 +90,11 @@ You can return either a single full path to a css file, or an Array of paths. Th
 
 If set to true esbuild will bundle your test and all it's dependencies into a single file. This might slow down the startup of your tests, so check the output for the build-times.
 
+#### singleBundleConfig
+*Default: undefined*
+
+Additional esbuild-config parameters for the esbuild-job used to merge files into a single bundle.
+
 #### port
 *Default: 0*
 

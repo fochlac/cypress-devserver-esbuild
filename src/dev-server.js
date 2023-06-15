@@ -17,7 +17,7 @@ async function createContext(esbuildConfig, entryPoints, plugins = []) {
     })
 }
 
-const createEsbuildDevServer = (esbuildConfig, { getCssFilePath, singleBundle, port, additionalEntryPoints, logFunction } = {}) => {
+const createEsbuildDevServer = (esbuildConfig, { getCssFilePath, singleBundle, singleBundleConfig, port, additionalEntryPoints, logFunction } = {}) => {
     return createCustomDevServer(async ({ specs, supportFile, onBuildComplete, onBuildStart, serveStatic }) => {
         const log = (logLevel, ...messages) => typeof logFunction === 'function' && logFunction(logLevel, ...messages)
         const outdir = esbuildConfig.outdir ?? '/dist'
@@ -75,6 +75,7 @@ const createEsbuildDevServer = (esbuildConfig, { getCssFilePath, singleBundle, p
                         platform: 'neutral',
                         target: esbuildConfig.target,
                         outfile: fileName,
+                        ...(singleBundleConfig || {})
                     })
                     log(3, `Creating bundle took ${Date.now() - now}ms.`)
                     loadBundle(resolve(fileName))

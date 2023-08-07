@@ -4,6 +4,16 @@ const { readFile, writeFile } = require("fs/promises");
 const { createCustomDevServer } = require("cypress-ct-custom-devserver");
 const crypto = require("crypto");
 
+const ensure = async (dir) => {
+  try {
+    await access(dir);
+  } catch (e) {
+    try {
+      await mkdir(dir);
+    } catch (e) {}
+  }
+};
+
 async function createContext(
   esbuildConfig,
   entryPoints,
@@ -146,9 +156,12 @@ const createEsbuildDevServer = (
                 css += content;
               } catch (e) {}
             }
-            writeFile(fileName, css, "utf8");
+            await ensure(outdir);
+            await ensure(join(outdir, "__bundle"));
+            await writeFile(fileName, css, "utf8");
+
             injectHTML(
-              `<link rel="stylesheet" type="text/css" href="./__bundle/test.${hash}.css" media="all">`
+              `<link rel="stylesheet" type="text/css" href="${cypressConfig.devServerPublicPathRoute}/__bundle/test.${hash}.css" media="all">`
             );
           }
         },

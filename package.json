@@ -31,6 +31,6 @@
     "react-dom": "^18.2.0"
   },
   "dependencies": {
-    "cypress-ct-custom-devserver": "^1.0.7"
+    "cypress-ct-custom-devserver": "^1.1.0"
   }
 }

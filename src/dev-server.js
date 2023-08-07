@@ -1,6 +1,6 @@
 const { context, build } = require('esbuild')
 const { resolve, join } = require('path')
-const { readFile } = require('fs/promises')
+const { readFile, writeFile } = require('fs/promises')
 const { createCustomDevServer } = require('cypress-ct-custom-devserver')
 const crypto = require('crypto')
 
@@ -17,7 +17,7 @@ async function createContext(esbuildConfig, entryPoints, plugins = []) {
     })
 }
 
-const createEsbuildDevServer = (esbuildConfig, { getCssFilePath, singleBundle, singleBundleConfig, port, additionalEntryPoints, logFunction } = {}) => {
+const createEsbuildDevServer = (esbuildConfig, { cypressConfig, getCssFilePath, singleBundle, singleBundleConfig, port, additionalEntryPoints, logFunction } = {}) => {
     return createCustomDevServer(async ({ specs, supportFile, onBuildComplete, onBuildStart, serveStatic }) => {
         const log = (logLevel, ...messages) => typeof logFunction === 'function' && logFunction(logLevel, ...messages)
         const outdir = esbuildConfig.outdir ?? '/dist'
@@ -48,7 +48,12 @@ const createEsbuildDevServer = (esbuildConfig, { getCssFilePath, singleBundle, s
             [monitorPlugin]
         )
 
-        ctx.watch()
+        if (cypressConfig.watchForFileChanges) {
+            ctx.watch()
+        }
+        else {
+            await ctx.build()
+        }
 
         serveStatic(outdir)
 
@@ -61,10 +66,10 @@ const createEsbuildDevServer = (esbuildConfig, { getCssFilePath, singleBundle, s
                 if (supportFile && !singleBundle) {
                     loadBundle(resolve(supportPath))
                 }
+                const hash = crypto.createHash('md5').update(testPath).digest('base64url')
 
                 const testPath = join(outdir, spec.relative.replace(spec?.fileExtension, '.js'))
                 if (singleBundle) {
-                    const hash = crypto.createHash('md5').update(testPath).digest('base64url')
                     const now = Date.now()
                     const fileName = join(outdir, `/__bundle/test.${hash}.js`)
                     await build({
@@ -85,6 +90,7 @@ const createEsbuildDevServer = (esbuildConfig, { getCssFilePath, singleBundle, s
                 }
 
                 if (typeof getCssFilePath === 'function') {
+                    const fileName = join(outdir, `/__bundle/test.${hash}.css`)
                     const cssPath = resolve(getCssFilePath(spec, outdir))
                     let css = ''
                     const files = Array.isArray(cssPath) ? cssPath : [cssPath]
@@ -101,7 +107,8 @@ const createEsbuildDevServer = (esbuildConfig, { getCssFilePath, singleBundle, s
                         }
                         catch (e) { }
                     }
-                    injectHTML(`<style>${css}</style>`)
+                    writeFile(fileName, css, 'utf8')
+                    injectHTML(`<link rel="stylesheet" type="text/css" href="$/__bundle/test.${hash}.css" media="all">`)
                 }
             },
             onSpecChange: async specs => {

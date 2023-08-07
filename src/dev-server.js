@@ -68,9 +68,9 @@ const createEsbuildDevServer = (esbuildConfig, { getCssFilePath, singleBundle, s
                 if (supportFile && !singleBundle) {
                     loadBundle(resolve(supportPath))
                 }
+                const testPath = join(outdir, spec.relative.replace(spec?.fileExtension, '.js'))
                 const hash = crypto.createHash('md5').update(testPath).digest('base64url')
 
-                const testPath = join(outdir, spec.relative.replace(spec?.fileExtension, '.js'))
                 if (singleBundle) {
                     const now = Date.now()
                     const fileName = join(outdir, `/__bundle/test.${hash}.js`)

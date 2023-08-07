@@ -4,8 +4,8 @@ const { readFile, writeFile } = require('fs/promises')
 const { createCustomDevServer } = require('cypress-ct-custom-devserver')
 const crypto = require('crypto')
 
-async function createContext(esbuildConfig, entryPoints, plugins = []) {
-    return context({
+async function createContext(esbuildConfig, entryPoints, watchMode, plugins = []) {
+    const config = {
         ...esbuildConfig,
         entryPoints,
         bundle: true,
@@ -14,7 +14,13 @@ async function createContext(esbuildConfig, entryPoints, plugins = []) {
         outbase: esbuildConfig.outbase ?? './',
         outdir: esbuildConfig.outdir ?? '/dist',
         plugins: [...esbuildConfig.plugins, ...plugins]
-    })
+    }
+    
+    return watchMode 
+        ? context(config).then((ctx) => {
+            ctx.watch()
+        })
+        : build(config).then(() => null)
 }
 
 const createEsbuildDevServer = (esbuildConfig, { getCssFilePath, singleBundle, singleBundleConfig, port, additionalEntryPoints, logFunction } = {}) => {
@@ -40,20 +46,16 @@ const createEsbuildDevServer = (esbuildConfig, { getCssFilePath, singleBundle, s
             }
         }
 
+        const watchMode = cypressConfig?.watchForFileChanges !== false
+
         let ctx = await createContext(
             esbuildConfig,
             specs.map(spec => spec.absolute)
                 .concat(supportFile ? [supportFile.absolute] : [])
                 .concat(Array.isArray(additionalEntryPoints) ? additionalEntryPoints : []),
+            watchMode,
             [monitorPlugin]
         )
-
-        if (cypressConfig?.watchForFileChanges === false) {
-            await ctx.build()
-        }
-        else {
-            ctx.watch()
-        }
 
         serveStatic(outdir)
 
@@ -112,16 +114,18 @@ const createEsbuildDevServer = (esbuildConfig, { getCssFilePath, singleBundle, s
                 }
             },
             onSpecChange: async specs => {
-                const oldCtx = ctx
-                const newCtx = await createContext(
-                    esbuildConfig,
-                    specs.map(spec => spec.absolute)
-                        .concat(supportFile ? [supportFile.absolute] : [])
-                        .concat(Array.isArray(additionalEntryPoints) ? additionalEntryPoints : []),
-                    [monitorPlugin]
-                )
-                newCtx.watch()
-                oldCtx.dispose()
+                if (watchMode) {
+                    const oldCtx = ctx
+                    ctx = await createContext(
+                        esbuildConfig,
+                        specs.map(spec => spec.absolute)
+                            .concat(supportFile ? [supportFile.absolute] : [])
+                            .concat(Array.isArray(additionalEntryPoints) ? additionalEntryPoints : []),
+                        watchMode,
+                        [monitorPlugin]
+                    )
+                    oldCtx.dispose()
+                }
             },
             onClose: () => ctx.dispose(),
             devServerPort: port,

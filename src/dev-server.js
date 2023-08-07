@@ -17,8 +17,8 @@ async function createContext(esbuildConfig, entryPoints, plugins = []) {
     })
 }
 
-const createEsbuildDevServer = (esbuildConfig, { cypressConfig, getCssFilePath, singleBundle, singleBundleConfig, port, additionalEntryPoints, logFunction } = {}) => {
-    return createCustomDevServer(async ({ specs, supportFile, onBuildComplete, onBuildStart, serveStatic }) => {
+const createEsbuildDevServer = (esbuildConfig, { getCssFilePath, singleBundle, singleBundleConfig, port, additionalEntryPoints, logFunction } = {}) => {
+    return createCustomDevServer(async ({ cypressConfig, specs, supportFile, onBuildComplete, onBuildStart, serveStatic }) => {
         const log = (logLevel, ...messages) => typeof logFunction === 'function' && logFunction(logLevel, ...messages)
         const outdir = esbuildConfig.outdir ?? '/dist'
         let markFirstBuildDone
@@ -48,11 +48,11 @@ const createEsbuildDevServer = (esbuildConfig, { cypressConfig, getCssFilePath, 
             [monitorPlugin]
         )
 
-        if (cypressConfig.watchForFileChanges) {
-            ctx.watch()
+        if (cypressConfig?.watchForFileChanges === false) {
+            await ctx.build()
         }
         else {
-            await ctx.build()
+            ctx.watch()
         }
 
         serveStatic(outdir)

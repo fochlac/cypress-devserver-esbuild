@@ -24,6 +24,7 @@ async function createContext(
   return watchMode
     ? context(config).then((ctx) => {
         ctx.watch();
+        return ctx;
       })
     : build(config).then(() => null);
 }

@@ -147,7 +147,7 @@ const createEsbuildDevServer = (
 
             if (supportFile) {
               const cssPath = resolve(getCssFilePath(supportFile, outdir));
-              files.push(...(Array.isArray(cssPath) ? cssPath : [cssPath]));
+              files.unshift(...(Array.isArray(cssPath) ? cssPath : [cssPath]));
             }
 
             for (const file of files) {

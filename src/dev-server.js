@@ -156,8 +156,8 @@ const createEsbuildDevServer = (
                   css += content;
                 } catch (e) {}
               }
-              await ensure(outdir);
-              await ensure(join(outdir, "__bundle"));
+              await ensure(outdir, log);
+              await ensure(join(outdir, "__bundle"), log);
               await writeFile(fileName, css, "utf8");
             }
             else {

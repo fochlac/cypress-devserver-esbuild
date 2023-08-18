@@ -1,16 +1,15 @@
 const { context, build } = require("esbuild");
-const { resolve, join } = require("path");
-const { readFile, writeFile } = require("fs/promises");
+const { resolve, join, relative } = require("path");
+const { readFile, writeFile, mkdir } = require("fs/promises");
 const { createCustomDevServer } = require("cypress-ct-custom-devserver");
 const crypto = require("crypto");
 
-const ensure = async (dir) => {
+const ensure = async (dir, log) => {
   try {
     await access(dir);
   } catch (e) {
-    try {
-      await mkdir(dir);
-    } catch (e) {}
+    log(4, `Creating dir "${dir}".`)
+    await mkdir(dir);
   }
 };
 
@@ -150,19 +149,29 @@ const createEsbuildDevServer = (
               files.unshift(...(Array.isArray(cssPath) ? cssPath : [cssPath]));
             }
 
-            for (const file of files) {
-              try {
-                const content = await readFile(file, "utf8");
-                css += content;
-              } catch (e) {}
+            if (singleBundle) {
+              for (const file of files) {
+                try {
+                  const content = await readFile(file, "utf8");
+                  css += content;
+                } catch (e) {}
+              }
+              await ensure(outdir);
+              await ensure(join(outdir, "__bundle"));
+              await writeFile(fileName, css, "utf8");
             }
-            await ensure(outdir);
-            await ensure(join(outdir, "__bundle"));
-            await writeFile(fileName, css, "utf8");
+            else {
+              for (const file of files) {
+                const relativePath = relative(outdir, file)
+                if (relativePath.startsWith('..')) {
+                  throw new Error('CSS-files need to be inside the out-dir or bundled using the `singleBundle` option.')
+                }
+                injectHTML(
+                  `<link rel="stylesheet" type="text/css" href="${cypressConfig.devServerPublicPathRoute}/${relativePath}" media="all">`
+                );
+              }
+            }
 
-            injectHTML(
-              `<link rel="stylesheet" type="text/css" href="${cypressConfig.devServerPublicPathRoute}/__bundle/test.${hash}.css" media="all">`
-            );
           }
         },
         onSpecChange: async (specs) => {

@@ -1,11 +1,14 @@
 {
   "name": "cypress-devserver-esbuild",
-  "version": "1.2.5",
+  "version": "1.2.6",
   "description": "Minimal esbuild dev server for usage with cypress component tests.",
   "main": "./src/dev-server.js",
   "scripts": {
-    "test": "cypress run --component",
-    "test:open": "cypress open --component --browser chrome"
+    "test": "npm run test:single && npm run test:normal",
+    "test:single": "cypress run --component --config-file ./cypress.config.js",
+    "test:normal": "cypress run --component --config-file ./cypress.config.alt.js",
+    "test:open": "cypress open --component --browser chrome --config-file ./cypress.config.alt.js",
+    "test:open:single": "cypress open --component --browser chrome --config-file ./cypress.config.js"
   },
   "repository": {
     "type": "git",

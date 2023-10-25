@@ -147,7 +147,7 @@ const createEsbuildDevServer = (
       },
       onSpecChange: async (specs) => {
         if (watchMode) {
-          const oldCtx = ctx
+          await ctx.dispose()
           ctx = await createContext(
             esbuildConfig,
             specs
@@ -157,7 +157,6 @@ const createEsbuildDevServer = (
             watchMode,
             [monitorPlugin]
           )
-          oldCtx.dispose()
         }
       },
       onClose: () => ctx.dispose(),

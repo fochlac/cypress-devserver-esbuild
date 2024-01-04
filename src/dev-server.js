@@ -82,18 +82,19 @@ const createEsbuildDevServer = (
 
     return {
       loadTest: async (spec, { injectHTML, loadBundle }) => {
-        const supportPath = supportFile && join(outdir, supportFile.relative.replace(supportFile?.fileExtension, '.js'))
         if (supportFile && !singleBundle) {
-          loadBundle(resolve(supportPath))
+          loadBundle(supportFile.relative.replace(supportFile?.fileExtension, '.js'))
         }
-        const testPath = join(outdir, spec.relative.replace(spec?.fileExtension, '.js'))
+        const testPath = spec.relative.replace(spec?.fileExtension, '.js')
         const hash = crypto.createHash('md5').update(testPath).digest('base64url')
 
         if (singleBundle) {
           const now = Date.now()
-          const fileName = join(outdir, `/__bundle/test.${hash}.js`)
+          const publicPath = `/__bundle/test.${hash}.js`
+          const fileName = join(outdir, publicPath)
+          const supportPath = supportFile && join(outdir, supportFile.relative.replace(supportFile?.fileExtension, '.js'))
           await build({
-            entryPoints: [testPath],
+            entryPoints: [join(outdir, testPath)],
             inject: [supportPath],
             bundle: true,
             allowOverwrite: true,
@@ -103,9 +104,9 @@ const createEsbuildDevServer = (
             ...(singleBundleConfig || {})
           })
           log(3, `Creating bundle took ${Date.now() - now}ms.`)
-          loadBundle(resolve(fileName))
+          loadBundle(publicPath)
         } else {
-          loadBundle(resolve(testPath))
+          loadBundle(testPath)
         }
 
         if (typeof getCssFilePath === 'function') {

@@ -17,6 +17,10 @@ const ensure = async (dir, log) => {
   }
 }
 
+const hasStringArrayContentChanged = (oldList, newList) => {
+  return oldList.length === newList.length && new Set([].concat(oldList, newList)).size !== oldList.length
+}
+
 async function createContext(esbuildConfig, entryPoints, watchMode, plugins = []) {
   const config = {
     ...esbuildConfig,
@@ -79,6 +83,8 @@ const createEsbuildDevServer = (
 
     await firstBuildDone
     log(5, 'First build completed - starting dev-server.')
+
+    let lastSpecs = specs.map(spec => spec.relative)
 
     return {
       loadTest: async (spec, { injectHTML, loadBundle }) => {
@@ -147,7 +153,9 @@ const createEsbuildDevServer = (
         }
       },
       onSpecChange: async (specs) => {
-        if (watchMode) {
+        const currentSpecs = specs.map(spec => spec.relative)
+        if (watchMode && hasStringArrayContentChanged(lastSpecs, currentSpecs)) {
+          lastSpecs = currentSpecs
           await ctx.dispose()
           ctx = await createContext(
             esbuildConfig,

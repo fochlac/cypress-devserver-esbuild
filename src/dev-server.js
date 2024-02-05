@@ -18,7 +18,7 @@ const ensure = async (dir, log) => {
 }
 
 const hasStringArrayContentChanged = (oldList, newList) => {
-  return oldList.length === newList.length && new Set([].concat(oldList, newList)).size !== oldList.length
+  return oldList.length !== newList.length || new Set([].concat(oldList, newList)).size !== oldList.length
 }
 
 async function createContext(esbuildConfig, entryPoints, watchMode, plugins = []) {

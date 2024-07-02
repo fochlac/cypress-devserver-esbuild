@@ -55,12 +55,14 @@ module.exports = defineConfig({
 
 ## Esbuild Config
 
-The first parameter is your esbuild config. Please note that some parameters are overwritten by the dev-server:
+The first parameter is your esbuild config. Please note that spec-pattern is resolved using globby which accepts different patterns compared to esbuild, so [only glob-patterns supported by globby](https://github.com/sindresorhus/globby?tab=readme-ov-file#globbing-patterns) will work.
+Also the following parameters are overwritten by the dev-server:
 
 |Option|Value|Note|
 |---|---|---|
 |entryPoints  |supportFile, test1, test2, ... |List of paths to all tests + the support file|
 |bundle       |true                           |bundle needs to be true to be able to load tests with an import|
+|publicPath   |null                           |public paths are not required for cypress tests and setting one will cause the test to break|
 |format       |'esm'                          |format needs to be esm to be able to use code splitting and for imports to work|
 |splitting    |*true*                         |splitting defaults to true, as it's much faster during build-time|
 |outbase      |*'./'*                         |outbase should be set so the folder structure is preserved and tests can be consistenly accessed|

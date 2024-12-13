@@ -20,6 +20,7 @@ Import the `createEsbuildDevServer`-function from `cypress-devserver-esbuild`. A
 The dev-server will set the entry points and build the tests as esm-bundles with codesplitting. If no outDir is set the devserver will compile the tests into `/dist`.
 If you use css-modules and compile them into separate css-files, you will need to set `hasCssFiles: true`.
 If your tests result in too many chunks and the MaxConnectionsPerHost-limit is slowing your tests down you can first try to explicitly set `splitting: false` in your esbuild config. If this is too slow you can also try to set `singleBundle: true`. This will bundle all the related scripts on demand, however if your test's scope is very wide this might be slow as well.
+This lib assumes the cypress-config is placed in the project's root-folder. 
 
 ```js
 const { defineConfig } = require("cypress");

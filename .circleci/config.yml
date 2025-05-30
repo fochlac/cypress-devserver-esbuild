@@ -9,5 +9,5 @@ workflows:
   build:
     jobs:
       - cypress/run:
-          executor: cypress/default-node20
           cypress-command: npm run ci
+          node-version: '20.11'

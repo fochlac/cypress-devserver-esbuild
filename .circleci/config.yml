@@ -9,4 +9,5 @@ workflows:
   build:
     jobs:
       - cypress/run:
-          cypress-command: npm test
+          executor: cypress/default-node20
+          cypress-command: npm run ci

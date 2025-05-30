@@ -2,8 +2,16 @@
   "name": "cypress-devserver-esbuild",
   "version": "1.5.0",
   "description": "Minimal esbuild dev server for usage with cypress component tests.",
-  "main": "./src/dev-server.js",
+  "main": "./dist/dev-server.js",
+  "types": "./dist/dev-server.d.ts",
   "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "prepublishOnly": "npm run build",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "type-check": "tsc --noEmit",
+    "ci": "npm run type-check && npm run format:check && npm run build && npm run test",
     "test": "npm run test:single && npm run test:normal",
     "test:single": "cypress run --component --config-file ./cypress.config.js",
     "test:normal": "cypress run --component --config-file ./cypress.config.alt.js",
@@ -15,11 +23,12 @@
     "url": "https://github.dev/fochlac/cypress-devserver-esbuild/"
   },
   "files": [
-    "src"
+    "dist"
   ],
   "keywords": [
     "cypress",
-    "esbuild"
+    "esbuild",
+    "typescript"
   ],
   "author": "Florian Riedel",
   "license": "MIT",
@@ -28,10 +37,13 @@
   },
   "devDependencies": {
     "@asn.aeb/esbuild-css-modules-plugin": "^0.1.9",
+    "@types/node": "^20.0.0",
     "cypress": "^14.4.0",
-    "esbuild": "^0.17.18",
+    "esbuild": "^0.25.5",
+    "prettier": "^3.5.3",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "typescript": "^5.0.0"
   },
   "dependencies": {
     "@cypress/react": "^9.0.1",

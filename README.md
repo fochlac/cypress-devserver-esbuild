@@ -14,6 +14,20 @@ npm install -D cypress-devserver-esbuild
 
 <br />
 
+## Compatibility
+
+| cypress-devserver-esbuild Version | Cypress Version | Notes |
+|-----------------------------------|-----------------|-------|
+| 1.0.x - 1.4.x | ^12.0.0 - ^13.x.x | Initial releases supporting Cypress 12 and 13 |
+| 1.5.x+ | ^12.0.0 - ^14.x.x | Added support for Cypress 14 while maintaining backward compatibility |
+
+**Requirements:**
+- Cypress version 12 or higher is required for all versions
+- Starting from version 1.5.0, Cypress 14 is also supported
+- esbuild ^0.17.0 is required as a peer dependency
+
+<br />
+
 ## Usage
 
 Import the `createEsbuildDevServer`-function from `cypress-devserver-esbuild`. As the first parameter pass your esbuild-configuration.
